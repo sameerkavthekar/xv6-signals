@@ -97,3 +97,14 @@ int sys_sigkill(void)
   argint(1, &signalno);
   return sigkill(pid, signalno);
 }
+int
+sys_signal(void)
+{
+  int signalno;
+  void (*funcptr)(int);
+  if(argint(0, &signalno) < 0)
+    return -1;
+  if(argptr(1, (void*)&funcptr, sizeof(*funcptr)) < 0)
+    return -1;
+  signal(signalno, funcptr);
+}

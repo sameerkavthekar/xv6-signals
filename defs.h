@@ -121,6 +121,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             sigkill(int, int);
+void            signal(int signalno, void (*funcptr)(int));
 
 // swtch.S
 void            swtch(struct context**, struct context*);

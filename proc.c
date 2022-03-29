@@ -556,3 +556,10 @@ int sigkill (int pid, int signalno)
   release(&ptable.lock);
   return -1;
 }
+void
+signal(int signalno, void (*funcptr)(int))
+{
+  struct proc *p = myproc();
+  p->handlers[signalno] = funcptr;
+  cprintf("signal worked as expected\n");
+}
