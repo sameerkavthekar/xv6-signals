@@ -532,3 +532,27 @@ procdump(void)
     cprintf("\n");
   }
 }
+int sigkill (int pid, int signalno)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == pid) {
+      if(signalno == 9) {
+        p->killed = 1;
+      }
+      else {
+        p->sigpending[signalno] = 1;
+      }
+      if(p->state == SLEEPING) {
+        p->state = RUNNABLE;
+      }
+      cprintf("sigkill worked as expected\n");
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  cprintf("sigkill failed to work as expected\n");
+  release(&ptable.lock);
+  return -1;
+}
