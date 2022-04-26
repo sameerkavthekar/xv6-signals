@@ -108,7 +108,9 @@ sys_signal(void)
     return -1;
   signal(signalno, funcptr);
 }
-int sys_sigreturn(void)
+
+int 
+sys_sigreturn(void)
 {
   cprintf("In Sigreturn\n");
 	return 0;

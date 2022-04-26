@@ -124,6 +124,8 @@ void						deliver(int);
 int             sigkill(int, int);
 void            signal(int signalno, void (*funcptr)(int));
 void						sigreturn(void);
+void            trampoline_start(void);
+void            trampoline_end(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

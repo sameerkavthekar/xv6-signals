@@ -1,8 +1,9 @@
 #include "syscall.h"
 #include "traps.h"
 
-.globl trampoline
-trampoline:
-	movl $SYS_sigreturn, %eax
+.globl trampoline_start
+.globl trampoline_end
+trampoline_start:
+  movl $SYS_sigreturn, %eax
   int $T_SYSCALL
-	ret
+trampoline_end:

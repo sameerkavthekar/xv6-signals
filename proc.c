@@ -17,7 +17,6 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
-extern void trampoline(void);
 
 static void wakeup1(void *chan);
 
@@ -581,9 +580,10 @@ deliver(int signum)
   *(uint *)sp = tf->edx;
   sp -= 1;
   *(uint *)sp = signum;
-  sp -= 1;
-  cprintf("%p\n", trampoline);
-  *(uint *)sp = (uint)trampoline;
+  sp -= (trampoline_end - trampoline_start);
+  memmove(sp, trampoline_start, trampoline_end - trampoline_start);
+  sp -= 4;
+  *(uint *)sp = sp;
   p->tf->esp = sp;
   p->tf->eip = p->handlers[signum];
   return;
