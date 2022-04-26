@@ -5,7 +5,8 @@ void handler(int signal) {
     printf(1, "Testing user handler\n");
 }
 int main(int argc, char *argv[]) {
-    signal(9, handler);
-    sigkill(1, 9);
-    return 0;
+    signal(0, handler);
+    sigkill(3, 0);
+    while(1);
+    exit();
 }

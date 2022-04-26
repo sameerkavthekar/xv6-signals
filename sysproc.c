@@ -110,5 +110,6 @@ sys_signal(void)
 }
 int sys_sigreturn(void)
 {
-	sigreturn(); 
+  cprintf("In Sigreturn\n");
+	return 0;
 }

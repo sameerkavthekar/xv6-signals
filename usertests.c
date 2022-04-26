@@ -1756,10 +1756,6 @@ main(int argc, char *argv[])
   }
   close(open("usertests.ran", O_CREATE));
 
-  int *a = (int *)1013904223;;
-  int b = *a;
-	printf(1, "Number: %d %d\n", a, b);
-
   argptest();
   createdelete();
   linkunlink();

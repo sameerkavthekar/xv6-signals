@@ -568,22 +568,23 @@ signal(int signalno, void (*funcptr)(int))
 void
 deliver(int signum)
 {
-	struct proc *p = myproc();
-	struct trapframe *tf = p->tf;
-	uint *sp = (uint *)tf->esp;
-	sp -= 1;
-	*(uint *)sp = tf->eip;
-	sp -= 1;
-	*(uint *)sp = tf->eax;
-	sp -= 1;
-	*(uint *)sp = tf->ecx;
-	sp -= 1;
-	*(uint *)sp = tf->edx;
-	sp -= 1;
-	*(uint *)sp = signum;
-	sp -= 1;
-	*(uint *)sp = (uint)trampoline;
-	p->tf->esp = sp;
-	p->tf->eip = p->handlers[signum];
-	return;
+  struct proc *p = myproc();
+  struct trapframe *tf = p->tf;
+  uint *sp = (uint *)tf->esp;
+  sp -= 1;
+  *(uint *)sp = tf->eip;
+  sp -= 1;
+  *(uint *)sp = tf->eax;
+  sp -= 1;
+  *(uint *)sp = tf->ecx;
+  sp -= 1;
+  *(uint *)sp = tf->edx;
+  sp -= 1;
+  *(uint *)sp = signum;
+  sp -= 1;
+  cprintf("%p\n", trampoline);
+  *(uint *)sp = (uint)trampoline;
+  p->tf->esp = sp;
+  p->tf->eip = p->handlers[signum];
+  return;
 }
