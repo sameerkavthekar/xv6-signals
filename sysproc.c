@@ -108,3 +108,7 @@ sys_signal(void)
     return -1;
   signal(signalno, funcptr);
 }
+int sys_sigreturn(void)
+{
+	sigreturn(); 
+}

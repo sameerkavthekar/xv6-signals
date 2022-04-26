@@ -120,8 +120,10 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void						deliver(int);
 int             sigkill(int, int);
 void            signal(int signalno, void (*funcptr)(int));
+void						sigreturn(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

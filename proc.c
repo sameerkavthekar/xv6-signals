@@ -17,6 +17,7 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
+extern void trampoline(void);
 
 static void wakeup1(void *chan);
 
@@ -562,4 +563,27 @@ signal(int signalno, void (*funcptr)(int))
   struct proc *p = myproc();
   p->handlers[signalno] = funcptr;
   cprintf("signal worked as expected\n");
+}
+
+void
+deliver(int signum)
+{
+	struct proc *p = myproc();
+	struct trapframe *tf = p->tf;
+	uint *sp = (uint *)tf->esp;
+	sp -= 1;
+	*(uint *)sp = tf->eip;
+	sp -= 1;
+	*(uint *)sp = tf->eax;
+	sp -= 1;
+	*(uint *)sp = tf->ecx;
+	sp -= 1;
+	*(uint *)sp = tf->edx;
+	sp -= 1;
+	*(uint *)sp = signum;
+	sp -= 1;
+	*(uint *)sp = (uint)trampoline;
+	p->tf->esp = sp;
+	p->tf->eip = p->handlers[signum];
+	return;
 }

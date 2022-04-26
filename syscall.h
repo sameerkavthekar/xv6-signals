@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_sigkill 22
 #define SYS_signal 23
+#define SYS_sigreturn 24
