@@ -568,22 +568,16 @@ void
 deliver(int signum)
 {
   struct proc *p = myproc();
-  struct trapframe *tf = p->tf;
-  uint *sp = (uint *)tf->esp;
-  sp -= 1;
-  *(uint *)sp = tf->eip;
-  sp -= 1;
-  *(uint *)sp = tf->eax;
-  sp -= 1;
-  *(uint *)sp = tf->ecx;
-  sp -= 1;
-  *(uint *)sp = tf->edx;
-  sp -= 1;
-  *(uint *)sp = signum;
-  sp -= (trampoline_end - trampoline_start);
-  memmove(sp, trampoline_start, trampoline_end - trampoline_start);
+  char *sp = (uint *)p->tf->esp;
+  sp -= sizeof(struct trapframe);
+  *(struct trapframe *)sp = *(p->tf);
+  cprintf("In Deliver: %p\n", sp);
   sp -= 4;
-  *(uint *)sp = sp;
+  *(int *)sp = signum;
+  sp -= 8;
+  memmove(sp, trampoline, 7);
+  sp -= 4;
+  *(uint *)sp = (uint)(sp);
   p->tf->esp = sp;
   p->tf->eip = p->handlers[signum];
   return;

@@ -89,7 +89,8 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-int sys_sigkill(void) 
+int
+sys_sigkill(void)
 {
   int signalno, pid;
   if(argint(0, &pid) < 0)
@@ -109,9 +110,17 @@ sys_signal(void)
   signal(signalno, funcptr);
 }
 
-int 
+int
 sys_sigreturn(void)
 {
   cprintf("In Sigreturn\n");
+  struct proc *p = myproc();
+  char *sp = (char *)p->tf->esp;
+  sp += 8;
+  int signum = *(uint *)sp;
+  sp += 4;
+  p->sigpending[signum]  = 0;
+  struct trapframe old_trapframe = *(struct trapframe *)sp;
+  memmove(p->tf, &old_trapframe, sizeof(struct proc));
 	return 0;
 }
