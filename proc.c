@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "signal.h"
 
 struct {
   struct spinlock lock;
@@ -532,7 +533,8 @@ procdump(void)
     cprintf("\n");
   }
 }
-int sigkill (int pid, int signalno)
+
+int sigsend (int pid, int signalno)
 {
   struct proc *p;
   acquire(&ptable.lock);
@@ -547,15 +549,16 @@ int sigkill (int pid, int signalno)
       if(p->state == SLEEPING) {
         p->state = RUNNABLE;
       }
-      cprintf("sigkill worked as expected\n");
+      cprintf("sigsend worked as expected\n");
       release(&ptable.lock);
       return 0;
     }
   }
-  cprintf("sigkill failed to work as expected\n");
+  cprintf("sigsend failed to work as expected\n");
   release(&ptable.lock);
   return -1;
 }
+
 void
 signal(int signalno, void (*funcptr)(int))
 {
@@ -581,4 +584,54 @@ deliver(int signum)
   p->tf->esp = sp;
   p->tf->eip = p->handlers[signum];
   return;
+}
+
+void defaulthandler_terminate() {
+  struct proc *p = myproc();
+  p->killed = 1;
+  if(p->state = SLEEPING) {
+    p->state = RUNNABLE;
+  }
+}
+
+void defaulthandler_continue() {
+  struct proc *p = myproc();
+  wakeup(p);
+}
+
+void defaulthandler_stop() {
+  acquire(&ptable.lock);
+  struct proc *p = myproc();
+  sleep(p, &ptable.lock);
+  release(&ptable.lock);
+}
+
+void execute_handler(int signalno) {
+  struct proc *p = myproc();
+  if(p->handlers[signalno] == SIG_IGN)
+    return;
+  else if(p->handlers[signalno] == SIG_DFL) {
+    if(signalno == SIGCHLD) {
+      return;
+    }
+    else if(signalno == SIGCONT) {
+      defaulthandler_continue();
+    }
+    else if(signalno == SIGSTOP) {
+      defaulthandler_stop();
+    }
+    else if(signalno == SIGSEGV) {
+      procdump();
+    }
+    else if(signalno == SIGINT || signalno == SIGKILL || signalno == SIGUSR1) {
+      defaulthandler_terminate();
+    }
+    else {
+      return;
+    } 
+  }
+  else {
+    deliver(signalno);
+  }
+  p->sigpending[signalno] = 0;
 }

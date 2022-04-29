@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "x86.h"
 #include "elf.h"
+#include "signal.h"
 
 int
 exec(char *path, char **argv)
@@ -92,6 +93,9 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
+  for(int i = 0; i < MAXSIGNALS; i++) {
+    curproc->handlers[i] = SIG_DFL;
+  }
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;

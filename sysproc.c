@@ -90,13 +90,13 @@ sys_uptime(void)
   return xticks;
 }
 int
-sys_sigkill(void)
+sys_sigsend(void)
 {
   int signalno, pid;
   if(argint(0, &pid) < 0)
     return -1;
   argint(1, &signalno);
-  return sigkill(pid, signalno);
+  return sigsend(pid, signalno);
 }
 int
 sys_signal(void)

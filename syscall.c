@@ -103,7 +103,7 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_sigkill(void);
+extern int sys_sigsend(void);
 extern int sys_signal(void);
 extern int sys_sigreturn(void);
 
@@ -129,7 +129,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_sigkill] sys_sigkill,
+[SYS_sigsend] sys_sigsend,
 [SYS_signal]  sys_signal,
 [SYS_sigreturn]  sys_sigreturn
 };

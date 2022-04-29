@@ -121,7 +121,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 void						deliver(int);
-int             sigkill(int, int);
+int             sigsend(int, int);
 void            signal(int signalno, void (*funcptr)(int));
 void						sigreturn(void);
 void            trampoline(void);

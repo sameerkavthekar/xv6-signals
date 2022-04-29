@@ -221,7 +221,7 @@ SYS_open	syscall.h	16;"	d
 SYS_pipe	syscall.h	5;"	d
 SYS_read	syscall.h	6;"	d
 SYS_sbrk	syscall.h	13;"	d
-SYS_sigkill	syscall.h	23;"	d
+SYS_sigsend	syscall.h	23;"	d
 SYS_signal	syscall.h	24;"	d
 SYS_sleep	syscall.h	14;"	d
 SYS_unlink	syscall.h	19;"	d
@@ -850,7 +850,7 @@ shiftmap	kbd.h	/^static uchar shiftmap[256] =$/;"	v
 shnum	elf.h	/^  ushort shnum;$/;"	m	struct:elfhdr
 shoff	elf.h	/^  uint shoff;$/;"	m	struct:elfhdr
 shstrndx	elf.h	/^  ushort shstrndx;$/;"	m	struct:elfhdr
-sigkill	proc.c	/^int sigkill (int pid, int signalno)$/;"	f
+sigsend	proc.c	/^int sigsend (int pid, int signalno)$/;"	f
 signal	proc.c	/^signal(int signalno, void (*funcptr)(int))$/;"	f
 signature	mp.h	/^  uchar signature[4];           \/\/ "PCMP"$/;"	m	struct:mpconf
 signature	mp.h	/^  uchar signature[4];           \/\/ "_MP_"$/;"	m	struct:mp
@@ -922,7 +922,7 @@ sys_open	sysfile.c	/^sys_open(void)$/;"	f
 sys_pipe	sysfile.c	/^sys_pipe(void)$/;"	f
 sys_read	sysfile.c	/^sys_read(void)$/;"	f
 sys_sbrk	sysproc.c	/^sys_sbrk(void)$/;"	f
-sys_sigkill	sysproc.c	/^int sys_sigkill(void) $/;"	f
+sys_sigsend	sysproc.c	/^int sys_sigsend(void) $/;"	f
 sys_signal	sysproc.c	/^sys_signal(void)$/;"	f
 sys_sleep	sysproc.c	/^sys_sleep(void)$/;"	f
 sys_unlink	sysfile.c	/^sys_unlink(void)$/;"	f
