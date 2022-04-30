@@ -6,7 +6,7 @@
 void handler(int signal) {
     int a = 3, b = 7;
     int c = a + b;
-    printf(1, "Testing user handler and the sum is: %d \n", c);
+    printf(1, "Testing user handler and the sum is: %d & Signal number is: %d \n", c, signal);
 }
 
 int main(int argc, char *argv[]) {

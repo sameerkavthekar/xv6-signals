@@ -575,12 +575,12 @@ deliver(int signum)
   sp -= sizeof(struct trapframe);
   *(struct trapframe *)sp = *(p->tf);
   cprintf("In Deliver: %p\n", sp);
-  sp -= 4;
-  *(int *)sp = signum;
   sp -= 8;
   memmove(sp, trampoline, 7);
   sp -= 4;
-  *(uint *)sp = (uint)(sp);
+  *(int *)sp = signum;
+  sp -= 4;
+  *(uint *)sp = (uint)(sp + 8);
   p->tf->esp = sp;
   p->tf->eip = p->handlers[signum];
   return;
