@@ -21,6 +21,21 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+void dfl_continue();
+void dfl_terminate();
+void dfl_ignore();
+void dfl_stop();
+
+static void (*default_handlers[])(void) = {
+  [SIGINT]    dfl_terminate,
+  [SIGKILL]   dfl_terminate,
+  [SIGSEGV]   dfl_terminate,
+  [SIGUSR1]   dfl_terminate,
+  [SIGCHLD]   dfl_ignore,
+  [SIGSTOP]   dfl_stop,
+  [SIGCONT]   dfl_continue,
+};
+
 void
 pinit(void)
 {
@@ -540,12 +555,7 @@ int sigsend (int pid, int signalno)
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->pid == pid) {
-      if(signalno == 9) {
-        p->killed = 1;
-      }
-      else {
-        p->sigpending[signalno] = 1;
-      }
+      p->sigpending[signalno] = 1;
       if(p->state == SLEEPING) {
         p->state = RUNNABLE;
       }
@@ -586,7 +596,7 @@ deliver(int signum)
   return;
 }
 
-void defaulthandler_terminate() {
+void dfl_terminate() {
   struct proc *p = myproc();
   p->killed = 1;
   if(p->state = SLEEPING) {
@@ -594,16 +604,20 @@ void defaulthandler_terminate() {
   }
 }
 
-void defaulthandler_continue() {
+void dfl_continue() {
   struct proc *p = myproc();
   wakeup(p);
 }
 
-void defaulthandler_stop() {
+void dfl_stop() {
   acquire(&ptable.lock);
   struct proc *p = myproc();
   sleep(p, &ptable.lock);
   release(&ptable.lock);
+}
+
+void dfl_ignore() {
+  return;
 }
 
 void execute_handler(int signalno) {
@@ -611,27 +625,9 @@ void execute_handler(int signalno) {
   if(p->handlers[signalno] == SIG_IGN)
     return;
   else if(p->handlers[signalno] == SIG_DFL) {
-    if(signalno == SIGCHLD) {
-      return;
-    }
-    else if(signalno == SIGCONT) {
-      defaulthandler_continue();
-    }
-    else if(signalno == SIGSTOP) {
-      defaulthandler_stop();
-    }
-    else if(signalno == SIGSEGV) {
-      procdump();
-    }
-    else if(signalno == SIGINT || signalno == SIGKILL || signalno == SIGUSR1) {
-      defaulthandler_terminate();
-    }
-    else {
-      return;
-    } 
+    default_handlers[signalno](); 
   }
   else {
     deliver(signalno);
   }
-  p->sigpending[signalno] = 0;
 }

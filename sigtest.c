@@ -10,7 +10,8 @@ void handler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    sigsend(3, SIGSEGV);
+    signal(SIGUSR1, handler);
+    sigsend(3, SIGUSR1);
     while(1);
     exit();
 }
