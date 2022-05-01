@@ -1739,11 +1739,11 @@ void argptest()
 }
 
 void userhandler1() {
-    printf(1, "User handler to get pid: %d\n", getpid());
+    printf(1, "[user handler1 output] pid: %d\n", getpid());
 }
 
 void userhandler2(int signalno) {
-    printf(1, "User handler to print signalno: %d\n", signalno);
+    printf(1, "[user handler2 output] signalno: %d\n", signalno);
 }
 
 int sigprocmasktest() {
@@ -1751,32 +1751,38 @@ int sigprocmasktest() {
   sigaction(SIGUSR1, userhandler1);
   if(sigprocmask(SIG_BLOCK, &tset1, &oset) == 0) {
     sigkill(pid, SIGUSR1);
+    sleep(1);
     printf(1, "sigprocmask block for SIGUSR1 test passed\n");
   }  
   else
     return -1;
   if(sigprocmask(SIG_UNBLOCK, &tset1, &oset) == 0) {
     sigkill(pid, SIGUSR1);
+    sleep(1);
     printf(1, "sigprocmask unblock for SIGUSR1 test passed\n");
   }  
   else
     return -1;
   if(sigprocmask(SIG_SETMASK, &tset3, &oset) == 0) {
+    sleep(1);
     printf(1, "sigprocmask setmask test passed\n");
   }  
   else
     return -1;
   if(sigprocmask(SIG_BLOCK, &tset2, &oset) == -1) {
+    sleep(1);
     printf(1, "sigprocmask cannot block SIGKILL\n");
   }  
   else
     return -1;
   if(sigprocmask(SIG_UNBLOCK, &tset2, &oset) == -1) {
+    sleep(1);
     printf(1, "sigprocmask cannot unblock SIGKILL\n");
   }  
   else
     return -1;
   if(sigprocmask(SIG_SETMASK, &tset4, &oset) == -1) {
+    sleep(1);
     printf(1, "sigprocmask cannot setmask for set:%d\n", tset4);
   }  
   else
@@ -1808,11 +1814,13 @@ int sigusrhtest() {
   else
     return -1;
   if(sigaction(SIGSTOP, userhandler1) == -1) {
+    sleep(1);
     printf(1, "default handler for SIGSTOP not overwritten\n");
   }
   else 
     return -1;
   if(sigaction(SIGKILL, SIG_IGN) == -1) {
+    sleep(1);
     printf(1, "default handler for SIGKILL not overwritten\n");
   }
   else 
@@ -1846,12 +1854,18 @@ int sigdfltest() {
 }
 
 void sigtest() {
-  if(sigprocmasktest() == -1)
+  printf(1, "sigprocmask test\n");
+  if(sigprocmasktest() == -1) {
     printf(1, "sigprocmask test failed\n");
-  if(sigusrhtest() == -1)
+  } else {
+    printf(1, "sigprocmask test passed\n");
+  }
+  printf(1, "user signal handlers test\n");
+  if(sigusrhtest() == -1) {
     printf(1, "user signal handlers test failed\n");
-  if(sigdfltest() == -1)
-    printf(1, "default signal handlers test failed\n");
+  } else {
+    printf(1, "user signal handlers test passed\n");
+  }   
 }
 
 unsigned long randstate = 1;
@@ -1867,13 +1881,6 @@ main(int argc, char *argv[])
 {
   printf(1, "usertests starting\n");
 
-  if(open("usertests.ran", 0) >= 0){
-    printf(1, "already ran user tests -- rebuild fs.img\n");
-    exit();
-  }
-  close(open("usertests.ran", O_CREATE));
-
-  sigtest();
   argptest();
   createdelete();
   linkunlink();
@@ -1885,7 +1892,6 @@ main(int argc, char *argv[])
   bigwrite();
   bigargtest();
   bsstest();
-  sbrktest();
   validatetest();
 
   opentest();
@@ -1897,7 +1903,6 @@ main(int argc, char *argv[])
   exitiputtest();
   iputtest();
 
-  mem();
   pipe1();
   preempt();
   exitwait();
@@ -1911,10 +1916,8 @@ main(int argc, char *argv[])
   dirfile();
   iref();
   forktest();
-  bigdir(); // slow
 
-  uio();
-
+  sigtest();
   exectest();
 
   exit();
