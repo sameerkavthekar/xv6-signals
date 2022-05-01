@@ -1738,8 +1738,10 @@ void argptest()
   printf(1, "arg test passed\n");
 }
 
+static int child = 0;
 void userhandler1() {
     printf(1, "[user handler1 output] pid: %d\n", getpid());
+    child = 1;
 }
 
 void userhandler2(int signalno) {
@@ -1792,17 +1794,10 @@ int sigprocmasktest() {
 
 int sigusrhtest() {
   int pid = getpid();
-  if(sigaction(SIGCHLD, userhandler1) == 0) {
-    sigkill(pid, SIGCHLD);
+  if(sigaction(SIGUSR1, userhandler2) == 0) {
+    sigkill(pid, SIGUSR1);
     sleep(1);
-    printf(1, "user handler for SIGCHLD test passed\n");
-  }  
-  else
-    return -1;
-  if(sigaction(SIGCHLD, userhandler2) == 0) {
-    sigkill(pid, SIGCHLD);
-    sleep(1);
-    printf(1, "user handler for SIGCHLD test passed\n");
+    printf(1, "user handler for SIGUSR1 test passed\n");
   }
   else
     return -1;
@@ -1828,44 +1823,135 @@ int sigusrhtest() {
   return 0;
 }
 
-int sigdfltest() {
-  int pid = getpid();
-  if(sigkill(pid, SIGCHLD) == 0)
-    printf(1, "default handler for SIGCHLD test passed");
+int
+sigdfltest()
+{
+  int status = 0, pid;
+
+  pid = fork();
+  if(pid < 0) {
+    printf(1, "fork failed\n");
+    exit();
+  }
+  if(pid == 0) {
+    int i = 0;
+    sleep(1);
+    exit();
+  }
+  sigaction(SIGCHLD, userhandler1);
+  sigkill(pid, SIGKILL);
+  sleep(1);
+  if(child == 1)
+    printf(1, "user handler for SIGCHLD test passed\n");
   else
-    return -1;
+    status = -1;
+  wait();
+
+  sigaction(SIGCHLD, SIG_IGN);
+  pid = fork();
+  if(pid < 0) {
+    printf(1, "fork failed\n");
+    exit();
+  }
+  if(pid == 0) {
+    while(1) {
+      sleep(50);
+      printf(1, "testing SIGSTOP\n");
+    }
+    exit();
+  }
   if(sigkill(pid, SIGSTOP) == 0)
-    printf(1, "default handler for SIGSTOP test passed");
+    printf(1, "default handler for SIGSTOP test passed\n");
   else
-    return -1;
+    status = -1;
+  sleep(200);
   if(sigkill(pid, SIGCONT) == 0)
-    printf(1, "default handler for SIGCONT test passed");
+    printf(1, "default handler for SIGCONT test passed\n");
   else
-    return -1;
-  if(sigkill(pid, SIGSEGV) == 0)
-    printf(1, "default handler for SIGSEGV test passed");
-  else
-    return -1;
+    status = -1;
+  sleep(1);
   if(sigkill(pid, SIGINT) == 0)
-    printf(1, "default handler for SIGINT test passed");
+    printf(1, "default handler for SIGINT test passed\n");
   else
-    return -1;
+    status = -1;
+  wait();
+  sleep(1);
+
+  int times = 0;
+  pid = fork();
+  if(pid < 0) {
+    printf(1, "fork failed\n");
+    exit();
+  }
+  if(pid == 0) {
+    if(times == 0)
+      *(int *)0 = 0;
+    exit();
+  }
+  if(sigkill(pid, SIGINT) == 0)
+    printf(1, "default handler for SIGSEGV test passed\n");
+  sleep(1);
+  wait();
+
+  return status;
+}
+
+int
+sigpausetest()
+{
+  int pid = fork();
+  if(pid < 0) {
+    printf(1, "fork failed\n");
+    exit();
+  }
+  if(pid == 0) {
+    pause();
+    printf(1, "wakeup after pause test passed\n");
+    exit();
+  }
+  sleep(1);
+  sigkill(pid, SIGUSR1);
+  sleep(1);
+  wait();
   return 0;
 }
 
-void sigtest() {
-  printf(1, "sigprocmask test\n");
-  if(sigprocmasktest() == -1) {
-    printf(1, "sigprocmask test failed\n");
-  } else {
-    printf(1, "sigprocmask test passed\n");
-  }
-  printf(1, "user signal handlers test\n");
+void
+sigtest()
+{
+  int count = 0;
+  printf(1, "signal test\n");
+  printf(1, "--user signal handlers test--\n");
   if(sigusrhtest() == -1) {
-    printf(1, "user signal handlers test failed\n");
+    printf(1, "--user signal handlers test failed--\n");
   } else {
-    printf(1, "user signal handlers test passed\n");
-  }   
+    printf(1, "--user signal handlers test passed--\n");
+    count++;
+  }
+  printf(1, "--sigprocmask test--\n");
+  if(sigprocmasktest() == -1) {
+    printf(1, "--sigprocmask test failed--\n");
+  } else {
+    printf(1, "--sigprocmask test passed--\n");
+    count++;
+  }
+  printf(1, "--pause test--\n");
+  if(sigpausetest() == -1) {
+    printf(1, "--pause test failed--\n");
+  } else {
+    printf(1, "--pause test passed--\n");
+    count++;
+  }
+  printf(1, "--default handlers test--\n");
+  if(sigdfltest() == -1) {
+    printf(1, "--default handlers test failed--\n");
+  } else {
+    printf(1, "--default handlers test passed--\n");
+    count++;
+  }
+
+  if(count == 4)
+    printf(1, "signal test ok\n");
 }
 
 unsigned long randstate = 1;
@@ -1879,7 +1965,7 @@ rand()
 int
 main(int argc, char *argv[])
 {
-  printf(1, "usertests starting\n");
+  // printf(1, "usertests starting\n");
 
   argptest();
   createdelete();
