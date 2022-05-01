@@ -74,6 +74,7 @@ sys_sleep(void)
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
+  check_signals();
   return 0;
 }
 

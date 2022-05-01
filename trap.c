@@ -78,6 +78,11 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  case T_PGFLT:
+  case T_GPFLT:
+  case T_ILLOP:
+    sigkill(myproc()->pid, SIGSEGV);
+    break;
 
   //PAGEBREAK: 13
   default:

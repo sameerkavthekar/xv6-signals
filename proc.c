@@ -229,7 +229,6 @@ fork(void)
   for(int i = 0; i < MAXSIGNALS; i++)
     np->handlers[i] = curproc->handlers[i];
   
-  np->ppid = curproc->pid;
   pid = np->pid;
 
   acquire(&ptable.lock);
@@ -266,12 +265,11 @@ exit(void)
   iput(curproc->cwd);
   end_op();
   curproc->cwd = 0;
-
+  sigkill(curproc->parent->pid, SIGCHLD);
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
-
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
