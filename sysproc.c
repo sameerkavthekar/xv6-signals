@@ -124,3 +124,15 @@ sys_sigreturn(void)
   memmove(p->tf, &old_trapframe, sizeof(struct proc));
   return 0;
 }
+
+int sys_sigprocmask(void)
+{
+  int how, *set, *oset;
+  if(argint(0, &how) < 0)
+    return -1;
+  if(argptr(1, &set, sizeof(*set)) < 0)
+    return -1;
+  if(argptr(2, &oset, sizeof(*oset)) < 0)
+    return -1;
+  return sigprocmask(how, set, oset);
+}

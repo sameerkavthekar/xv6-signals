@@ -622,6 +622,9 @@ void dfl_ignore() {
 
 void execute_handler(int signalno) {
   struct proc *p = myproc();
+  int process_mask = p->masks;
+  if(((process_mask >> (signalno - 1)) & 1) == SIG_BLOCK)
+    return;
   if(p->handlers[signalno] == SIG_IGN)
     return;
   else if(p->handlers[signalno] == SIG_DFL) {
@@ -630,4 +633,24 @@ void execute_handler(int signalno) {
   else {
     deliver(signalno);
   }
+}
+
+int sigprocmask(int how, int *set, int *oset) {
+  struct proc *p = myproc();
+  int process_set = 1 << (*set - 1);
+  *oset = p->masks;
+  switch(how) {
+    case SIG_UNBLOCK:
+                    p->masks = ((p->masks & ~process_set) | (SIG_UNBLOCK << (*set - 1)));
+                    break;
+    case SIG_BLOCK: 
+                    p->masks = ((p->masks & ~process_set) | (SIG_BLOCK << (*set - 1)));
+                    break;
+    case SIG_SETMASK:
+                    p->masks = *set;
+                    break;
+    default:
+            return -1;
+  }
+  return 0;
 }

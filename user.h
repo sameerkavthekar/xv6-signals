@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int sigsend(int, int);
 int signal(int signalno, void(*handler)(int));
+int sigprocmask(int, int*, int*);
 
 // ulib.c
 int stat(const char*, struct stat*);

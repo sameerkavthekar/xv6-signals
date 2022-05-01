@@ -23,3 +23,4 @@
 #define SYS_sigsend 22
 #define SYS_signal 23
 #define SYS_sigreturn 24
+#define SYS_sigprocmask 25

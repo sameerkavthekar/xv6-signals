@@ -106,14 +106,15 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
+    for(int i = 0; i < MAXSIGNALS; i++) {
+      if(myproc() && myproc()->sigpending[i]) {
+        myproc()->sigpending[i] = 0;
+        execute_handler(i);
+      }
+    }
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
-  for(int i = 0; i < MAXSIGNALS; i++) {
-    if(myproc() && myproc()->sigpending[i]) {
-      execute_handler(i);
-    }
-  }
 }

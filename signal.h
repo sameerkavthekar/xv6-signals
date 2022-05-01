@@ -11,6 +11,10 @@
 #define SIG_IGN     0
 #define SIG_DFL     1
 
+#define SIG_UNBLOCK 0
+#define SIG_BLOCK   1
+#define SIG_SETMASK 2
+
 void defaulthandler_terminate();
 void defaulthandler_continue();
 void defaulthandler_stop();

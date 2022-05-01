@@ -122,9 +122,10 @@ void            wakeup(void*);
 void            yield(void);
 void						deliver(int);
 int             sigsend(int, int);
-void            signal(int signalno, void (*funcptr)(int));
-void						sigreturn(void);
+void            signal(int, void (*)(int));
+void			sigreturn(void);
 void            trampoline(void);
+int             sigprocmask(int, int*, int*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
