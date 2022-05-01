@@ -580,6 +580,8 @@ void
 sigaction(int signalno, void (*funcptr)(int))
 {
   struct proc *p = myproc();
+  if(signalno == SIGKILL || signalno == SIGSTOP)
+    return;
   p->handlers[signalno] = funcptr;
   cprintf("signal worked as expected\n");
 }
@@ -606,7 +608,7 @@ deliver(int signum)
 void dfl_terminate() {
   struct proc *p = myproc();
   p->killed = 1;
-  if(p->state = SLEEPING) {
+  if(p->state == SLEEPING) {
     p->state = RUNNABLE;
   }
 }
@@ -644,7 +646,21 @@ void execute_handler(int signalno) {
 
 int sigprocmask(int how, int *set, int *oset) {
   struct proc *p = myproc();
-  int process_set = 1 << (*set - 1);
+  int process_set = 1 << (*set - 1), process_mask = *set;
+  if(how == SIG_BLOCK || how == SIG_UNBLOCK) {
+    if((*set) == SIGKILL || (*set) == SIGSTOP) {
+      return -1;
+    }     
+  } 
+  else {
+    if(((process_mask >> (SIGKILL - 1)) & 1) == 1) {
+      return -1;
+    }
+    process_mask = *set;
+    if(((process_mask >> (SIGSTOP - 1)) & 1) == 1) {
+      return -1;
+    }
+  }
   *oset = p->masks;
   switch(how) {
     case SIG_UNBLOCK:
@@ -666,7 +682,7 @@ int pause(void) {
   acquire(&ptable.lock);
   struct proc *p = myproc();
   if(p->paused == 0) {
-    p->paused == 1;
+    p->paused = 1;
     sleep(p, &ptable.lock);
   }
   release(&ptable.lock);

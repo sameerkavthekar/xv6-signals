@@ -10,16 +10,9 @@ void handler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    int x = SIGUSR1, y = 0;
-    sigaction(SIGUSR1, handler);
+    int x = SIGKILL, y = 0, z = 4784130;
     sigprocmask(SIG_BLOCK, &x, &y);
-    printf(1, "1 %d\n", y);
-    sigkill(3, SIGUSR1);
-    sigprocmask(SIG_UNBLOCK, &x, &y);
-    printf(1, "2 %d\n", y);
-    sigkill(3, SIGUSR1);
-    pause();
-    printf(1, "After Pause");
+    sigprocmask(SIG_SETMASK, &z, &y);
     while(1);
     exit();
 }
