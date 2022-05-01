@@ -122,7 +122,7 @@ void            wakeup(void*);
 void            yield(void);
 void						deliver(int);
 int             sigkill(int, int);
-void            sigaction(int, void (*)(int));
+int             sigaction(int, void (*)(int));
 int							sigreturn(void);
 void            trampoline(void);
 int             sigprocmask(int, int*, int*);

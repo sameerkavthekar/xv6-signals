@@ -7,6 +7,7 @@
 #include "syscall.h"
 #include "traps.h"
 #include "memlayout.h"
+#include "signal.h"
 
 char buf[8192];
 char name[3];
@@ -1737,6 +1738,70 @@ void argptest()
   printf(1, "arg test passed\n");
 }
 
+void userhandler1() {
+    printf(1, "User handler to get pid: %d\n", getpid());
+}
+
+void userhandler2(int signalno) {
+    printf(1, "User handler to print signalno: %d\n", signalno);
+}
+
+int sigusrhtest() {
+  int pid = getpid();
+  if(sigaction(SIGCHLD, userhandler1) == 0) {
+    sigkill(pid, SIGCHLD);
+    sleep(1);
+    printf(1, "user handler for SIGCHLD test passed\n");
+  }  
+  else
+    return -1;
+  if(sigaction(SIGCHLD, userhandler2) == 0) {
+    sigkill(pid, SIGCHLD);
+    sleep(1);
+    printf(1, "user handler for SIGCHLD test passed\n");
+  }
+  else
+    return -1;
+  if(sigaction(SIGSTOP, userhandler1) == -1) {
+    printf(1, "default handler for SIGSTOP not overwritten\n");
+  }
+  else 
+    return -1;
+  return 0;
+}
+
+int sigdfltest() {
+  int pid = getpid();
+  if(sigkill(pid, SIGCHLD) == 0)
+    printf(1, "default handler for SIGCHLD test passed");
+  else
+    return -1;
+  if(sigkill(pid, SIGSTOP) == 0)
+    printf(1, "default handler for SIGSTOP test passed");
+  else
+    return -1;
+  if(sigkill(pid, SIGCONT) == 0)
+    printf(1, "default handler for SIGCONT test passed");
+  else
+    return -1;
+  if(sigkill(pid, SIGSEGV) == 0)
+    printf(1, "default handler for SIGSEGV test passed");
+  else
+    return -1;
+  if(sigkill(pid, SIGINT) == 0)
+    printf(1, "default handler for SIGINT test passed");
+  else
+    return -1;
+  return 0;
+}
+
+void sigtest() {
+  if(sigusrhtest() == -1)
+    printf(1, "user signal handlers test failed\n");
+  if(sigdfltest() == -1)
+    printf(1, "default signal handlers test failed\n");
+}
+
 unsigned long randstate = 1;
 unsigned int
 rand()
@@ -1756,6 +1821,7 @@ main(int argc, char *argv[])
   }
   close(open("usertests.ran", O_CREATE));
 
+  sigtest();
   argptest();
   createdelete();
   linkunlink();

@@ -108,7 +108,7 @@ sys_sigaction(void)
     return -1;
   if(argptr(1, (void*)&funcptr, sizeof(*funcptr)) < 0)
     return -1;
-  sigaction(signalno, funcptr);
+  return sigaction(signalno, funcptr);
 }
 
 int

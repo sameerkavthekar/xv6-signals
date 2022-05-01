@@ -29,11 +29,11 @@ void dfl_stop();
 static void (*default_handlers[])(void) = {
   [SIGINT]    dfl_terminate,
   [SIGKILL]   dfl_terminate,
-  [SIGSEGV]   dfl_terminate,
   [SIGUSR1]   dfl_terminate,
   [SIGCHLD]   dfl_ignore,
   [SIGSTOP]   dfl_stop,
   [SIGCONT]   dfl_continue,
+  [SIGSEGV]   procdump,
 };
 
 void
@@ -572,26 +572,24 @@ sigkill (int pid, int signalno)
       if(p->state == SLEEPING) {
         p->state = RUNNABLE;
       }
-      cprintf("sigkill worked as expected\n");
       release(&ptable.lock);
       return 0;
     }
   }
-  cprintf("sigkill failed to work as expected\n");
   release(&ptable.lock);
   return -1;
 }
 
-void
+int
 sigaction(int signalno, void (*funcptr)(int))
 {
+  if(signalno == SIGKILL || signalno == SIGSTOP)
+    return -1;
   acquire(&ptable.lock);
   struct proc *p = myproc();
-  if(signalno == SIGKILL || signalno == SIGSTOP)
-    return;
   p->handlers[signalno] = funcptr;
   release(&ptable.lock);
-  cprintf("signal worked as expected\n");
+  return 0;
 }
 
 void
@@ -722,7 +720,6 @@ int
 sigreturn()
 {
   acquire(&ptable.lock);
-  cprintf("In Sigreturn\n");
   struct proc *p = myproc();
   char *sp = (char *)p->tf->esp;
   int signum = *(uint *)sp;
@@ -739,6 +736,7 @@ sigreturn()
 void check_signals() {
   for(int i = 0; i < MAXSIGNALS; i++) {
     if(myproc() && myproc()->sigpending[i]) {
+      myproc()->sigpending[i] = 0;
       execute_handler(i);
     }
   }
