@@ -96,6 +96,7 @@ exec(char *path, char **argv)
   for(int i = 0; i < MAXSIGNALS; i++) {
     curproc->handlers[i] = SIG_DFL;
   }
+  curproc->paused = 0;
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;

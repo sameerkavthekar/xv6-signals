@@ -136,3 +136,8 @@ int sys_sigprocmask(void)
     return -1;
   return sigprocmask(how, set, oset);
 }
+
+int sys_pause(void)
+{
+  return pause();
+}

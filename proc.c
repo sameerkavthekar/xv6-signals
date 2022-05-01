@@ -555,6 +555,13 @@ int sigsend (int pid, int signalno)
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->pid == pid) {
+      if(p->paused == 1) {
+        if((p->handlers[signalno] != SIG_IGN && p->handlers[signalno] != SIG_DFL) \
+         || default_handlers[signalno] == dfl_terminate) {
+           p->paused = 0;
+           wakeup(p); 
+        }
+      }
       p->sigpending[signalno] = 1;
       if(p->state == SLEEPING) {
         p->state = RUNNABLE;
@@ -653,4 +660,15 @@ int sigprocmask(int how, int *set, int *oset) {
             return -1;
   }
   return 0;
+}
+
+int pause(void) {
+  acquire(&ptable.lock);
+  struct proc *p = myproc();
+  if(p->paused == 0) {
+    p->paused == 1;
+    sleep(p, &ptable.lock);
+  }
+  release(&ptable.lock);
+  return -1;
 }

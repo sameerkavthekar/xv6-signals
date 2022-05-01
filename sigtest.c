@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
     sigprocmask(SIG_UNBLOCK, &x, &y);
     printf(1, "2 %d\n", y);
     sigsend(3, SIGUSR1);
+    pause();
+    printf(1, "After Pause");
     while(1);
     exit();
 }

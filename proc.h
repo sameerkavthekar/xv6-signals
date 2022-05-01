@@ -53,6 +53,7 @@ struct proc {
   int sigpending[MAXSIGNALS];
   void (*handlers[MAXSIGNALS])(int);
   uint masks;
+  int paused;
 };
 
 // Process memory is laid out contiguously, low addresses first:

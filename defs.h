@@ -126,6 +126,7 @@ void            signal(int, void (*)(int));
 void			sigreturn(void);
 void            trampoline(void);
 int             sigprocmask(int, int*, int*);
+int             pause(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
