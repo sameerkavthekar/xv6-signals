@@ -83,6 +83,9 @@ trap(struct trapframe *tf)
   case T_ILLOP:
     sigkill(myproc()->pid, SIGSEGV);
     break;
+  case T_FPERR:
+    sigkill(myproc()->pid, SIGFPE);
+    break;
 
   //PAGEBREAK: 13
   default:

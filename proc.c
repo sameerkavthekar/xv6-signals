@@ -30,10 +30,13 @@ static void (*default_handlers[])(void) = {
   [SIGINT]    dfl_terminate,
   [SIGKILL]   dfl_terminate,
   [SIGUSR1]   dfl_terminate,
+  [SIGTERM]   dfl_terminate,
   [SIGCHLD]   dfl_ignore,
   [SIGSTOP]   dfl_stop,
   [SIGCONT]   dfl_continue,
   [SIGSEGV]   procdump,
+  [SIGFPE]    procdump,
+  [SIGSYS]    procdump
 };
 
 void
