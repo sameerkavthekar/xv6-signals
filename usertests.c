@@ -1746,6 +1746,44 @@ void userhandler2(int signalno) {
     printf(1, "User handler to print signalno: %d\n", signalno);
 }
 
+int sigprocmasktest() {
+  int pid = getpid(), tset1 = SIGUSR1, tset2 = SIGKILL, tset3 = 105, tset4 = 361, oset = 0;
+  sigaction(SIGUSR1, userhandler1);
+  if(sigprocmask(SIG_BLOCK, &tset1, &oset) == 0) {
+    sigkill(pid, SIGUSR1);
+    printf(1, "sigprocmask block for SIGUSR1 test passed\n");
+  }  
+  else
+    return -1;
+  if(sigprocmask(SIG_UNBLOCK, &tset1, &oset) == 0) {
+    sigkill(pid, SIGUSR1);
+    printf(1, "sigprocmask unblock for SIGUSR1 test passed\n");
+  }  
+  else
+    return -1;
+  if(sigprocmask(SIG_SETMASK, &tset3, &oset) == 0) {
+    printf(1, "sigprocmask setmask test passed\n");
+  }  
+  else
+    return -1;
+  if(sigprocmask(SIG_BLOCK, &tset2, &oset) == -1) {
+    printf(1, "sigprocmask cannot block SIGKILL\n");
+  }  
+  else
+    return -1;
+  if(sigprocmask(SIG_UNBLOCK, &tset2, &oset) == -1) {
+    printf(1, "sigprocmask cannot unblock SIGKILL\n");
+  }  
+  else
+    return -1;
+  if(sigprocmask(SIG_SETMASK, &tset4, &oset) == -1) {
+    printf(1, "sigprocmask cannot setmask for set:%d\n", tset4);
+  }  
+  else
+    return -1;
+  return 0;
+}
+
 int sigusrhtest() {
   int pid = getpid();
   if(sigaction(SIGCHLD, userhandler1) == 0) {
@@ -1762,8 +1800,20 @@ int sigusrhtest() {
   }
   else
     return -1;
+  if(sigaction(SIGCONT, SIG_IGN) == 0) {
+    sigkill(pid, SIGCONT);
+    sleep(1);
+    printf(1, "user handler for SIGCONT test passed\n");
+  }
+  else
+    return -1;
   if(sigaction(SIGSTOP, userhandler1) == -1) {
     printf(1, "default handler for SIGSTOP not overwritten\n");
+  }
+  else 
+    return -1;
+  if(sigaction(SIGKILL, SIG_IGN) == -1) {
+    printf(1, "default handler for SIGKILL not overwritten\n");
   }
   else 
     return -1;
@@ -1796,6 +1846,8 @@ int sigdfltest() {
 }
 
 void sigtest() {
+  if(sigprocmasktest() == -1)
+    printf(1, "sigprocmask test failed\n");
   if(sigusrhtest() == -1)
     printf(1, "user signal handlers test failed\n");
   if(sigdfltest() == -1)
