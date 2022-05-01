@@ -226,6 +226,10 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
+  for(int i = 0; i < MAXSIGNALS; i++)
+    np->handlers[i] = curproc->handlers[i];
+  
+  np->ppid = curproc->pid;
   pid = np->pid;
 
   acquire(&ptable.lock);
@@ -440,7 +444,7 @@ sleep(void *chan, struct spinlock *lk)
 
   if(lk == 0)
     panic("sleep without lk");
-
+  
   // Must acquire ptable.lock in order to
   // change p->state and then call sched.
   // Once we hold ptable.lock, we can be
@@ -451,6 +455,7 @@ sleep(void *chan, struct spinlock *lk)
     acquire(&ptable.lock);  //DOC: sleeplock1
     release(lk);
   }
+  
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
@@ -549,7 +554,8 @@ procdump(void)
   }
 }
 
-int sigkill (int pid, int signalno)
+int
+sigkill (int pid, int signalno)
 {
   struct proc *p;
   acquire(&ptable.lock);
@@ -559,7 +565,9 @@ int sigkill (int pid, int signalno)
         if((p->handlers[signalno] != SIG_IGN && p->handlers[signalno] != SIG_DFL) \
          || default_handlers[signalno] == dfl_terminate) {
            p->paused = 0;
-           wakeup(p); 
+           release(&ptable.lock);
+           wakeup(p);
+           acquire(&ptable.lock);
         }
       }
       p->sigpending[signalno] = 1;
@@ -579,19 +587,21 @@ int sigkill (int pid, int signalno)
 void
 sigaction(int signalno, void (*funcptr)(int))
 {
+  acquire(&ptable.lock);
   struct proc *p = myproc();
   p->handlers[signalno] = funcptr;
+  release(&ptable.lock);
   cprintf("signal worked as expected\n");
 }
 
 void
 deliver(int signum)
 {
+  acquire(&ptable.lock);
   struct proc *p = myproc();
   char *sp = (uint *)p->tf->esp;
   sp -= sizeof(struct trapframe);
   *(struct trapframe *)sp = *(p->tf);
-  cprintf("In Deliver: %p\n", sp);
   sp -= 8;
   memmove(sp, trampoline, 7);
   sp -= 4;
@@ -600,34 +610,47 @@ deliver(int signum)
   *(uint *)sp = (uint)(sp + 8);
   p->tf->esp = sp;
   p->tf->eip = p->handlers[signum];
+  release(&ptable.lock);
   return;
 }
 
-void dfl_terminate() {
+void
+dfl_terminate()
+{
+  acquire(&ptable.lock);
   struct proc *p = myproc();
   p->killed = 1;
   if(p->state = SLEEPING) {
     p->state = RUNNABLE;
   }
+  release(&ptable.lock);
 }
 
-void dfl_continue() {
+void
+dfl_continue()
+{
   struct proc *p = myproc();
   wakeup(p);
 }
 
-void dfl_stop() {
+void
+dfl_stop()
+{
   acquire(&ptable.lock);
   struct proc *p = myproc();
   sleep(p, &ptable.lock);
   release(&ptable.lock);
 }
 
-void dfl_ignore() {
+void
+dfl_ignore()
+{
   return;
 }
 
-void execute_handler(int signalno) {
+void
+execute_handler(int signalno)
+{
   struct proc *p = myproc();
   int process_mask = p->masks;
   if(((process_mask >> (signalno - 1)) & 1) == SIG_BLOCK)
@@ -642,13 +665,16 @@ void execute_handler(int signalno) {
   }
 }
 
-int sigprocmask(int how, int *set, int *oset) {
+int
+sigprocmask(int how, int *set, int *oset)
+{
   struct proc *p = myproc();
   int process_set = 1 << (*set - 1);
   *oset = p->masks;
+  acquire(&ptable.lock);
   switch(how) {
     case SIG_UNBLOCK:
-                    p->masks = ((p->masks & ~process_set) | (SIG_UNBLOCK << (*set - 1)));
+                    p->masks = ((p->masks & ~process_set) | (SIG_UNBLOCK <<(*set - 1)));
                     break;
     case SIG_BLOCK: 
                     p->masks = ((p->masks & ~process_set) | (SIG_BLOCK << (*set - 1)));
@@ -657,18 +683,49 @@ int sigprocmask(int how, int *set, int *oset) {
                     p->masks = *set;
                     break;
     default:
+            release(&ptable.lock);
             return -1;
   }
+  release(&ptable.lock);
   return 0;
 }
 
-int pause(void) {
-  acquire(&ptable.lock);
+int
+pause(void)
+{
   struct proc *p = myproc();
+  acquire(&ptable.lock);
   if(p->paused == 0) {
-    p->paused == 1;
+    p->paused = 1;
     sleep(p, &ptable.lock);
   }
   release(&ptable.lock);
+  check_signals();
   return -1;
+}
+
+int
+sigreturn()
+{
+  acquire(&ptable.lock);
+  cprintf("In Sigreturn\n");
+  struct proc *p = myproc();
+  char *sp = (char *)p->tf->esp;
+  int signum = *(uint *)sp;
+  sp += 4;
+  sp += 8;
+  p->sigpending[signum]  = 0;
+  struct trapframe old_trapframe = *(struct trapframe *)sp;
+  memmove(p->tf, &old_trapframe, sizeof(struct proc));
+  p->sigpending[signum] = 0;
+  release(&ptable.lock);
+  return 0;
+}
+
+void check_signals() {
+  for(int i = 0; i < MAXSIGNALS; i++) {
+    if(myproc() && myproc()->sigpending[i]) {
+      execute_handler(i);
+    }
+  }
 }

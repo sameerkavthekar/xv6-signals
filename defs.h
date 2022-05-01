@@ -123,10 +123,11 @@ void            yield(void);
 void						deliver(int);
 int             sigkill(int, int);
 void            sigaction(int, void (*)(int));
-void			sigreturn(void);
+int							sigreturn(void);
 void            trampoline(void);
 int             sigprocmask(int, int*, int*);
 int             pause(void);
+void						check_signals();
 
 // swtch.S
 void            swtch(struct context**, struct context*);

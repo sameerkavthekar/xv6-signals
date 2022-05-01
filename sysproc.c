@@ -113,16 +113,7 @@ sys_sigaction(void)
 int
 sys_sigreturn(void)
 {
-  cprintf("In Sigreturn\n");
-  struct proc *p = myproc();
-  char *sp = (char *)p->tf->esp;
-  int signum = *(uint *)sp;
-  sp += 4;
-  sp += 8;
-  p->sigpending[signum]  = 0;
-  struct trapframe old_trapframe = *(struct trapframe *)sp;
-  memmove(p->tf, &old_trapframe, sizeof(struct proc));
-  return 0;
+  return sigreturn();
 }
 
 int sys_sigprocmask(void)
