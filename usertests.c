@@ -425,39 +425,6 @@ exitwait(void)
   printf(1, "exitwait ok\n");
 }
 
-void
-mem(void)
-{
-  void *m1, *m2;
-  int pid, ppid;
-
-  printf(1, "mem test\n");
-  ppid = getpid();
-  if((pid = fork()) == 0){
-    m1 = 0;
-    while((m2 = malloc(10001)) != 0){
-      *(char**)m2 = m1;
-      m1 = m2;
-    }
-    while(m1){
-      m2 = *(char**)m1;
-      free(m1);
-      m1 = m2;
-    }
-    m1 = malloc(1024*20);
-    if(m1 == 0){
-      printf(1, "couldn't allocate mem?!!\n");
-      kill(ppid);
-      exit();
-    }
-    free(m1);
-    printf(1, "mem ok\n");
-    exit();
-  } else {
-    wait();
-  }
-}
-
 // More file system tests
 
 // two processes write to the same file descriptor
@@ -887,49 +854,6 @@ linkunlink()
     exit();
 
   printf(1, "linkunlink ok\n");
-}
-
-// directory that uses indirect blocks
-void
-bigdir(void)
-{
-  int i, fd;
-  char name[10];
-
-  printf(1, "bigdir test\n");
-  unlink("bd");
-
-  fd = open("bd", O_CREATE);
-  if(fd < 0){
-    printf(1, "bigdir create failed\n");
-    exit();
-  }
-  close(fd);
-
-  for(i = 0; i < 500; i++){
-    name[0] = 'x';
-    name[1] = '0' + (i / 64);
-    name[2] = '0' + (i % 64);
-    name[3] = '\0';
-    if(link("bd", name) != 0){
-      printf(1, "bigdir link failed\n");
-      exit();
-    }
-  }
-
-  unlink("bd");
-  for(i = 0; i < 500; i++){
-    name[0] = 'x';
-    name[1] = '0' + (i / 64);
-    name[2] = '0' + (i % 64);
-    name[3] = '\0';
-    if(unlink(name) != 0){
-      printf(1, "bigdir unlink failed");
-      exit();
-    }
-  }
-
-  printf(1, "bigdir ok\n");
 }
 
 void
@@ -1413,141 +1337,6 @@ forktest(void)
 }
 
 void
-sbrktest(void)
-{
-  int fds[2], pid, pids[10], ppid;
-  char *a, *b, *c, *lastaddr, *oldbrk, *p, scratch;
-  uint amt;
-
-  printf(stdout, "sbrk test\n");
-  oldbrk = sbrk(0);
-
-  // can one sbrk() less than a page?
-  a = sbrk(0);
-  int i;
-  for(i = 0; i < 5000; i++){
-    b = sbrk(1);
-    if(b != a){
-      printf(stdout, "sbrk test failed %d %x %x\n", i, a, b);
-      exit();
-    }
-    *b = 1;
-    a = b + 1;
-  }
-  pid = fork();
-  if(pid < 0){
-    printf(stdout, "sbrk test fork failed\n");
-    exit();
-  }
-  c = sbrk(1);
-  c = sbrk(1);
-  if(c != a + 1){
-    printf(stdout, "sbrk test failed post-fork\n");
-    exit();
-  }
-  if(pid == 0)
-    exit();
-  wait();
-
-  // can one grow address space to something big?
-#define BIG (100*1024*1024)
-  a = sbrk(0);
-  amt = (BIG) - (uint)a;
-  p = sbrk(amt);
-  if (p != a) {
-    printf(stdout, "sbrk test failed to grow big address space; enough phys mem?\n");
-    exit();
-  }
-  lastaddr = (char*) (BIG-1);
-  *lastaddr = 99;
-
-  // can one de-allocate?
-  a = sbrk(0);
-  c = sbrk(-4096);
-  if(c == (char*)0xffffffff){
-    printf(stdout, "sbrk could not deallocate\n");
-    exit();
-  }
-  c = sbrk(0);
-  if(c != a - 4096){
-    printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);
-    exit();
-  }
-
-  // can one re-allocate that page?
-  a = sbrk(0);
-  c = sbrk(4096);
-  if(c != a || sbrk(0) != a + 4096){
-    printf(stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);
-    exit();
-  }
-  if(*lastaddr == 99){
-    // should be zero
-    printf(stdout, "sbrk de-allocation didn't really deallocate\n");
-    exit();
-  }
-
-  a = sbrk(0);
-  c = sbrk(-(sbrk(0) - oldbrk));
-  if(c != a){
-    printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);
-    exit();
-  }
-
-  // can we read the kernel's memory?
-  for(a = (char*)(KERNBASE); a < (char*) (KERNBASE+2000000); a += 50000){
-    ppid = getpid();
-    pid = fork();
-    if(pid < 0){
-      printf(stdout, "fork failed\n");
-      exit();
-    }
-    if(pid == 0){
-      printf(stdout, "oops could read %x = %x\n", a, *a);
-      kill(ppid);
-      exit();
-    }
-    wait();
-  }
-
-  // if we run the system out of memory, does it clean up the last
-  // failed allocation?
-  if(pipe(fds) != 0){
-    printf(1, "pipe() failed\n");
-    exit();
-  }
-  for(i = 0; i < sizeof(pids)/sizeof(pids[0]); i++){
-    if((pids[i] = fork()) == 0){
-      // allocate a lot of memory
-      sbrk(BIG - (uint)sbrk(0));
-      write(fds[1], "x", 1);
-      // sit around until killed
-      for(;;) sleep(1000);
-    }
-    if(pids[i] != -1)
-      read(fds[0], &scratch, 1);
-  }
-  // if those failed allocations freed up the pages they did allocate,
-  // we'll be able to allocate here
-  c = sbrk(4096);
-  for(i = 0; i < sizeof(pids)/sizeof(pids[0]); i++){
-    if(pids[i] == -1)
-      continue;
-    kill(pids[i]);
-    wait();
-  }
-  if(c == (char*)0xffffffff){
-    printf(stdout, "failed sbrk leaked memory\n");
-    exit();
-  }
-
-  if(sbrk(0) > oldbrk)
-    sbrk(-(sbrk(0) - oldbrk));
-
-  printf(stdout, "sbrk test OK\n");
-}
-
-void
 validateint(int *p)
 {
   int res;
@@ -1694,35 +1483,6 @@ fsfull()
   }
 
   printf(1, "fsfull test finished\n");
-}
-
-void
-uio()
-{
-  #define RTC_ADDR 0x70
-  #define RTC_DATA 0x71
-
-  ushort port = 0;
-  uchar val = 0;
-  int pid;
-
-  printf(1, "uio test\n");
-  pid = fork();
-  if(pid == 0){
-    port = RTC_ADDR;
-    val = 0x09;  /* year */
-    /* http://wiki.osdev.org/Inline_Assembly/Examples */
-    asm volatile("outb %0,%1"::"a"(val), "d" (port));
-    port = RTC_DATA;
-    asm volatile("inb %1,%0" : "=a" (val) : "d" (port));
-    printf(1, "uio: uio succeeded; test FAILED\n");
-    exit();
-  } else if(pid < 0){
-    printf (1, "fork failed\n");
-    exit();
-  }
-  wait();
-  printf(1, "uio test done\n");
 }
 
 void argptest()
