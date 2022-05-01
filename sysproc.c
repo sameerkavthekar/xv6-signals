@@ -90,16 +90,16 @@ sys_uptime(void)
   return xticks;
 }
 int
-sys_sigsend(void)
+sys_sigkill(void)
 {
   int signalno, pid;
   if(argint(0, &pid) < 0)
     return -1;
   argint(1, &signalno);
-  return sigsend(pid, signalno);
+  return sigkill(pid, signalno);
 }
 int
-sys_signal(void)
+sys_sigaction(void)
 {
   int signalno;
   void (*funcptr)(int);
@@ -107,7 +107,7 @@ sys_signal(void)
     return -1;
   if(argptr(1, (void*)&funcptr, sizeof(*funcptr)) < 0)
     return -1;
-  signal(signalno, funcptr);
+  sigaction(signalno, funcptr);
 }
 
 int

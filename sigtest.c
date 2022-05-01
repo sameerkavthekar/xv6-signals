@@ -11,13 +11,13 @@ void handler(int signal) {
 
 int main(int argc, char *argv[]) {
     int x = SIGUSR1, y = 0;
-    signal(SIGUSR1, handler);
+    sigaction(SIGUSR1, handler);
     sigprocmask(SIG_BLOCK, &x, &y);
     printf(1, "1 %d\n", y);
-    sigsend(3, SIGUSR1);
+    sigkill(3, SIGUSR1);
     sigprocmask(SIG_UNBLOCK, &x, &y);
     printf(1, "2 %d\n", y);
-    sigsend(3, SIGUSR1);
+    sigkill(3, SIGUSR1);
     pause();
     printf(1, "After Pause");
     while(1);

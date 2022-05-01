@@ -549,7 +549,7 @@ procdump(void)
   }
 }
 
-int sigsend (int pid, int signalno)
+int sigkill (int pid, int signalno)
 {
   struct proc *p;
   acquire(&ptable.lock);
@@ -566,18 +566,18 @@ int sigsend (int pid, int signalno)
       if(p->state == SLEEPING) {
         p->state = RUNNABLE;
       }
-      cprintf("sigsend worked as expected\n");
+      cprintf("sigkill worked as expected\n");
       release(&ptable.lock);
       return 0;
     }
   }
-  cprintf("sigsend failed to work as expected\n");
+  cprintf("sigkill failed to work as expected\n");
   release(&ptable.lock);
   return -1;
 }
 
 void
-signal(int signalno, void (*funcptr)(int))
+sigaction(int signalno, void (*funcptr)(int))
 {
   struct proc *p = myproc();
   p->handlers[signalno] = funcptr;

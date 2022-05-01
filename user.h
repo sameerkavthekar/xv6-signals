@@ -23,8 +23,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int sigsend(int, int);
-int signal(int signalno, void(*handler)(int));
+int sigkill(int, int);
+int sigaction(int signalno, void(*handler)(int));
 int sigprocmask(int, int*, int*);
 int pause(void);
 
